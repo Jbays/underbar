@@ -7,6 +7,7 @@
   // seem very useful, but remember it--if a function needs to provide an
   // iterator when the user does not pass one in, this will be handy.
   _.identity = function(val) {
+    return val;
   };
 
   /**
@@ -36,7 +37,14 @@
 
   // Like first, but for the last elements. If n is undefined, return just the
   // last element.
-  _.last = function(array, n) {
+   _.last = function(array, n) {
+    if(n === undefined){
+      return array [array.length - 1];
+    } if(array.length <= n){
+        return array; 
+      } else {
+        return array.slice(array.length - n); 
+      }
   };
 
   // Call iterator(value, key, collection) for each element of collection.
@@ -45,6 +53,15 @@
   // Note: _.each does not have a return value, but rather simply runs the
   // iterator function over each item in the input collection.
   _.each = function(collection, iterator) {
+    if(Array.isArray(collection)) {
+      for(var i = 0; i < collection.length; i++) {
+        iterator(collection[i], i, collection);
+      };
+    } else {
+      for (var prop in collection){
+        iterator(collection[prop], prop, collection);
+      }
+    };
   };
 
   // Returns the index at which value can be found in the array, or -1 if value
@@ -66,25 +83,50 @@
 
   // Return all elements of an array that pass a truth test.
   _.filter = function(collection, test) {
+    var array = [];
+    _.each(collection, function(val){
+       if(test(val)){
+        array.push(val);
+       }
+    });
+    return array;
   };
 
   // Return all elements of an array that don't pass a truth test.
-  _.reject = function(collection, test) {
+  
     // TIP: see if you can re-use _.filter() here, without simply
     // copying code in and modifying it
-  };
+  _.reject = function(collection, test) {
+    return _.filter(collection, function(item){
+      return !test(item);
+    });
+  }
 
   // Produce a duplicate-free version of the array.
   _.uniq = function(array) {
-  };
+  
+  var uniArray = [];
+    _.each(array, function(item){
+      if(_.indexOf(uniArray, item) === -1){
+        uniArray.push(item);
+      }
+    });
+    return uniArray;
+ };
 
 
   // Return the results of applying an iterator to each element.
   _.map = function(collection, iterator) {
-    // map() is a useful primitive iteration function that works a lot
+    var result = [];
+    _.each(collection, function(item){
+      result.push(iterator(item));
+    });
+    return result;
+  };
+
+      // map() is a useful primitive iteration function that works a lot
     // like each(), but in addition to running the operation on all
     // the members, it also maintains an array of results.
-  };
 
   /*
    * TIP: map is really handy when you want to transform an array of
@@ -125,6 +167,14 @@
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
   _.reduce = function(collection, iterator, accumulator) {
+    _.each(collection, function(value){
+      if(accumulator === undefined){
+         accumulator = value;
+      } else {
+       accumulator = iterator(accumulator, value);
+      }
+    });
+    return accumulator;
   };
 
   // Determine if the array or object contains a given value (using `===`).
@@ -142,12 +192,23 @@
 
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
-    // TIP: Try re-using reduce() here.
-  };
+    iterator = iterator || _.identity;
+    return _.reduce(collection, function(match, item) {
+      if (!match) {
+        return false;
+      }
+      return iterator(item) ? true : false;
+    }, true); 
+};
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
+    iterator = iterator || _.identity;
+    return !_.every(collection, function(item){
+      return !iterator(item);
+  })
+
     // TIP: There's a very clever way to re-use every() here.
   };
 
@@ -171,11 +232,25 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    for (var i = 1; i < arguments.length; i++) {
+      for (var key in arguments[i]) {
+        obj[key] = arguments[i][key];
+      }
+    }
+    return obj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    for (var i = 1; i < arguments.length; i++){
+      for (var key in arguments[i]){
+        if (!(key in obj)) {
+          obj[key] = arguments[i][key];
+        }
+      }
+    }
+    return obj;
   };
 
 
@@ -218,8 +293,20 @@
   // _.memoize should return a function that, when called, will check if it has
   // already computed the result for the given argument and return that value
   // instead if possible.
+
   _.memoize = function(func) {
-  };
+    var cache = {};
+    return function() {
+      var key = JSON.stringify(arguments);
+      if(cache[key]) {
+        return cache[key];
+      } else {
+        var val = func.apply(this, arguments);
+        cache[key] = val;
+        return val;
+      }
+    };
+  }
 
   // Delays a function for the given number of milliseconds, and then calls
   // it with the arguments supplied.
@@ -228,6 +315,13 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    var funcArgs = [];
+    for (var i = 2; i < arguments.length; i++) {
+      funcArgs.push(arguments[i]);
+    }
+    setTimeout(function(){
+      func.apply(this, funcArgs);
+    }, wait);
   };
 
 
@@ -242,6 +336,14 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var result = array.slice();
+    for (var i = result.length - 1; i >= 1; i--) {
+      var j = Math.floor(Math.random()*i);
+      var temp = result[i];
+      result[i] = result[j];
+      result[j] = temp;
+    }
+    return result;
   };
 
 
